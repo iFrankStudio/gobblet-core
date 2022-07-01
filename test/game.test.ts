@@ -2,35 +2,11 @@ import { expect, test } from "vitest";
 import {
   Board,
   Color,
-  ExternalStack,
   Stack,
-  PieceSize,
   Piece,
 } from "../src/game";
 
-function initGame() {
-  const blackStacks: PieceSize[][] = [
-    [1, 2, 3, 4],
-    [5, 6, 7, 8],
-    [9, 10, 11, 12],
-  ];
-  const whiteStacks: PieceSize[][] = [
-    [3, 6, 9, 12],
-    [1, 4, 7, 10],
-    [2, 5, 8, 11],
-  ];
-  const externalStacks: ExternalStack[] = [];
-  blackStacks.forEach((s) => {
-    externalStacks.push(new ExternalStack(s, Color.BLACK));
-  });
-  whiteStacks.forEach((s) => {
-    externalStacks.push(new ExternalStack(s, Color.WHITE));
-  });
-
-  return new Board({ externalStacks });
-}
-
-const game = initGame();
+const game = new Board();
 
 test("start a new game", () => {
   const boards: Stack[] = [];
@@ -51,7 +27,7 @@ test("play to win", () => {
   pointedPiece = game.blackExternalStacks[2].current;
   game.move(game.blackExternalStacks[2], { x: 1, y: 1 });
   boards[0].moveIn(pointedPiece);
-  expect(game.board).toEqual(boards); 
+  expect(game.board).toEqual(boards);
   expect(game.hexSnapshot).toBe(0x40000000);
   expect(game.turnTo).toBe(Color.WHITE);
   expect(game.checkForWinner()).toBe(null);

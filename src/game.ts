@@ -6,7 +6,7 @@ export enum Color {
   WHITE = 1,
 }
 
-export type PieceSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type PieceSize = 1 | 2 | 3 | 4;
 
 export interface Piece {
   size: PieceSize;
@@ -53,9 +53,9 @@ export class ExternalStack extends Stack {
 }
 
 export interface BoardData {
-  archivedBoard?: Stack[];
-  turnTo?: Color;
-  externalStacks: ExternalStack[]; // 0~2: black, 3~5: white
+  archivedBoard: Stack[];
+  turnTo: Color;
+  externalStacks: ExternalStack[]; // index 0~2: black, 3~5: white
 }
 
 export class Board {
@@ -63,8 +63,8 @@ export class Board {
   protected turnState: Color;
   protected externalStacks: ExternalStack[];
 
-  constructor(board: BoardData) {
-    if (board.archivedBoard) {
+  constructor(board?: BoardData) {
+    if (board?.archivedBoard) {
       this.realtimeBoard = board.archivedBoard;
     } else {
       // init empty board
@@ -74,11 +74,19 @@ export class Board {
       }
     }
 
-    this.turnState = board.turnTo || Color.BLACK;
+    this.turnState = board?.turnTo || Color.BLACK;
 
-    this.checkExternalStacks(board.externalStacks);
-
-    this.externalStacks = board.externalStacks;
+    if (board?.externalStacks) {
+      this.checkExternalStacks(board.externalStacks);
+      this.externalStacks = board.externalStacks;
+    } else {
+      this.externalStacks = [];
+      for (let i = 0; i < 6; i++) {
+        this.externalStacks.push(
+          new ExternalStack([1, 2, 3, 4], i < 3 ? Color.BLACK : Color.WHITE)
+        );
+      }
+    }
   }
 
   /**
