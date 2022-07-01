@@ -6,7 +6,7 @@ export enum Color {
   WHITE = 1,
 }
 
-export type PieceSize = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type PieceSize = 1 | 2 | 3 | 4;
 
 export interface Piece {
   size: PieceSize;
@@ -53,9 +53,9 @@ export class ExternalStack extends Stack {
 }
 
 export interface BoardData {
-  archivedBoard?: Stack[];
-  turnTo?: Color;
-  externalStacks: ExternalStack[]; // 0~2: black, 3~5: white
+  archivedBoard: Stack[];
+  turnTo: Color;
+  externalStacks: ExternalStack[]; // index 0~2: black, 3~5: white
 }
 
 export class Board {
@@ -63,8 +63,8 @@ export class Board {
   protected turnState: Color;
   protected externalStacks: ExternalStack[];
 
-  constructor(board: BoardData) {
-    if (board.archivedBoard) {
+  constructor(board?: BoardData) {
+    if (board?.archivedBoard) {
       this.realtimeBoard = board.archivedBoard;
     } else {
       // init empty board
@@ -74,11 +74,19 @@ export class Board {
       }
     }
 
-    this.turnState = board.turnTo || Color.BLACK;
+    this.turnState = board?.turnTo || Color.BLACK;
 
-    this.checkExternalStacks(board.externalStacks);
-
-    this.externalStacks = board.externalStacks;
+    if (board?.externalStacks) {
+      this.checkExternalStacks(board.externalStacks);
+      this.externalStacks = board.externalStacks;
+    } else {
+      this.externalStacks = [];
+      for (let i = 0; i < 6; i++) {
+        this.externalStacks.push(
+          new ExternalStack([1, 2, 3, 4], i < 3 ? Color.BLACK : Color.WHITE)
+        );
+      }
+    }
   }
 
   /**
@@ -235,36 +243,17 @@ export class Board {
   }
 
   protected checkExternalStacks(stacks: Stack[]) {
-    const coloredChunks = _.chunk(stacks, 3);
-    for (const chunks of coloredChunks) {
-      const allPieces = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-      let count = 12;
-      for (let i = 0; i < 3; i++) {
-        const pieces = chunks[i].all;
-        for (const piece of pieces) {
-          if (allPieces.includes(piece.size)) {
-            count--;
-          } else {
-            throw new Error(
-              `Found an illegal piece ${JSON.stringify(
-                piece
-              )} from external stacks.`
-            );
-          }
+    for (const [i, stack] of stacks.entries()) {
+      for (const [j, piece] of stack.all.entries()) {
+        if (
+          piece.color !== (i < 3 ? Color.BLACK : Color.WHITE) ||
+          piece.size !== j + 1
+        ) {
+          throw new Error(
+            `Incurrect external stacks: found wrong piece at stacks[${i}].pieces[${j}]: ${JSON.stringify(piece)} \n
+            (should be { color: ${i < 3 ? Color.BLACK : Color.WHITE}, size: ${j + 1} })`
+          );
         }
-      }
-      if (count > 0) {
-        throw new Error(
-          `Found ${-count} more piece(s) in external stacks of ${
-            chunks[0].current.color === Color.BLACK ? "BLACK" : "WHITE"
-          }.`
-        );
-      } else if (count < 0) {
-        throw new Error(
-          `Missing ${count} piece(s) in external stacks of ${
-            chunks[0].current.color === Color.BLACK ? "BLACK" : "WHITE"
-          }.`
-        );
       }
     }
     return true;
