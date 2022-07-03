@@ -166,12 +166,21 @@ export class Board {
       0x55000000, 0x550000, 0x5500, 0x55, 0x40404040, 0x10101010, 0x4040404,
       0x1010101, 0x1041040, 0x40100401,
     ];
+    let blackWins = false;
+    let whiteWins = false;
     for (const w of wins) {
       if ((w & this.hexSnapshot) === w) {
-        return Color.BLACK;
+        blackWins = true;
       } else if (((w << 1) & this.hexSnapshot) === w << 1) {
-        return Color.WHITE;
+        whiteWins = true;
       }
+    }
+    if (blackWins && whiteWins) {
+      // When a piece has been moved, `this.turnTo` would be set to the other one immidiately.
+      // So if we have both color lined up, the winner shouldn't be the one who just moved.
+      return this.turnTo === Color.BLACK ? Color.BLACK : Color.WHITE;
+    } else if (blackWins || whiteWins) {
+      return blackWins ? Color.BLACK : Color.WHITE;
     }
     return null;
   }
@@ -250,8 +259,12 @@ export class Board {
           piece.size !== j + 1
         ) {
           throw new Error(
-            `Incurrect external stacks: found wrong piece at stacks[${i}].pieces[${j}]: ${JSON.stringify(piece)} \n
-            (should be { color: ${i < 3 ? Color.BLACK : Color.WHITE}, size: ${j + 1} })`
+            `Incurrect external stacks: found wrong piece at stacks[${i}].pieces[${j}]: ${JSON.stringify(
+              piece
+            )} \n
+            (should be { color: ${i < 3 ? Color.BLACK : Color.WHITE}, size: ${
+              j + 1
+            } })`
           );
         }
       }
